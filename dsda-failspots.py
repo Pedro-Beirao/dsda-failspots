@@ -140,7 +140,7 @@ pwd = os.path.dirname(os.path.abspath(__file__))
 parser = argparse.ArgumentParser(description="dsda-failspots")
 parser.add_argument("-iwad", default="", help="IWAD to load")
 parser.add_argument("-file", nargs="+", default=[], help="The first WAD passed needs to have the map lump")
-parser.add_argument("-map", required=True, help="Map to get the heatmap of (ex: E3M1, MAP12)")
+parser.add_argument("-map", required=True, help="Map to get the failspots of (ex: E3M1, MAP12)")
 parser.add_argument("-width", type=int, default=1920, help="Width of the resulting image")
 parser.add_argument("-heatmap", type=int, default=0, help="Turn on the heatmap and set the number of samples on each direction")
 
