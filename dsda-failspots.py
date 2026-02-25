@@ -7,7 +7,7 @@ import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
 
-def drawmap(wad, name, points, filename, width):
+def drawmap(wad, name, width):
     xsize = width - 8
 
     try:
@@ -54,6 +54,9 @@ def drawmap(wad, name, points, filename, width):
          draw.line((p1x, p1y+1, p2x, p2y+1), fill=color)
          draw.line((p1x, p1y-1, p2x, p2y-1), fill=color)
 
+    return im, xmax, xmin, ymax, ymin, xsize, scale
+
+def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
     overlay = Image.new('RGBA', (int(xmax - xmin) + 8, int(ymax - ymin) + 8), (0,0,0,0))
     draw = ImageDraw.Draw(overlay)
 
@@ -92,15 +95,20 @@ def drawmap(wad, name, points, filename, width):
               alpha = 0
           draw.rectangle((x*s, y*s, (x+1)*s, (y+1)*s), fill=(255,0,0,alpha))
 
-    font = ImageFont.truetype(os.path.join(pwd, "OpenSans.ttf"), int(xsize/20))
-    draw.text((10, 10), str(image_index+1) + "/10", fill="white", font=font)
+    if args.gif:
+      font = ImageFont.truetype(os.path.join(pwd, "OpenSans.ttf"), int(xsize/25))
+      text = str(image_index+1) + "/10"
+      x, y = 10, 10
 
-    del draw
+      bbox = draw.textbbox((x, y), text, font=font)
+      text_width = bbox[2] - bbox[0]
+      text_height = bbox[3] - bbox[1]
 
-    result = Image.alpha_composite(im, overlay)
-    # result.save(filename, "png")
-    # print("Saved image as " + filename)
-    return result
+      draw.rectangle([x - 5, y - 5, x + text_width + 5, y + text_height + 50 ], fill="black")
+
+      draw.text((x, y), text, fill="white", font=font)
+
+    return overlay
 
 def process_demo(iwad, files, demo):
     points = []
@@ -144,9 +152,9 @@ parser = argparse.ArgumentParser(description="dsda-failspots")
 parser.add_argument("-iwad", default="", help="IWAD to load")
 parser.add_argument("-file", nargs="+", default=[], help="The first WAD passed needs to have the map lump")
 parser.add_argument("-map", required=True, help="Map to get the failspots of (ex: E3M1, MAP12)")
-parser.add_argument("-width", type=int, default=1920, help="Width of the resulting image")
+parser.add_argument("-width", type=int, default=1920, help="Width of the resulting image (default: 1920)")
 parser.add_argument("-heatmap", type=int, default=0, help="Turn on the heatmap and set the number of samples on each direction")
-parser.add_argument("-gif", action="store_true", help="Outputs a gif of the progression of the demo attempts")
+parser.add_argument("-gif", type=int, default=0, help="Outputs a gif of the progression of the demo attempts.\n1: Only show attempts on this interval.\n2: Accumulate attempts")
 
 args = parser.parse_args()
 
@@ -164,23 +172,30 @@ points = get_death_spots(args.iwad, args.file, map)
 sorted_points= sorted(points, key=lambda x: x[2])
 interval = int(len(sorted_points)/10)
 
-images = []
-image_index = 0
-while image_index < 10:
-  images += [drawmap(
-    wad,
-    map,
-    points[image_index*interval:(image_index+1)*interval],
-    os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.png" if args.heatmap else ".png")),
-    args.width
-  )]
-  image_index += 1
+base, xmax, xmin, ymax, ymin, xsize, scale = drawmap(wad, map, args.width)
 
-# Save as GIF
-images[0].save(
-  os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.gif" if args.heatmap else ".gif")),
+if args.gif:
+  images = []
+  image_index = 0
+  while image_index < 10:
+    overlay = draw_points(points[image_index*interval:(image_index+1)*interval],
+                          xmax, xmin, ymax, ymin, xsize, scale)
+    if image_index == 0 or args.gif == 1:
+      images += [Image.alpha_composite(base, overlay)]
+    else:
+      images += [Image.alpha_composite(images[image_index-1], overlay)]
+    image_index += 1
+
+
+  images[0].save(
+    os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.gif" if args.heatmap else ".gif")),
     save_all=True,
     append_images=images[1:],
-    duration=1000,   # milliseconds per frame
-    loop=0          # 0 = infinite loop
-)
+    duration=1000,
+    loop=0
+  )
+else:
+  overlay = draw_points(points,xmax, xmin, ymax, ymin, xsize, scale)
+  image = Image.alpha_composite(base, overlay)
+
+  image.save(os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.png" if args.heatmap else ".png")))

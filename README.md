@@ -13,7 +13,7 @@ You need a custom build of dsda-doom that outputs the position where the demo at
 Please provide the full paths to the WAD files.
 
 ```bash
-python3 dsda-failspots.py [-h] [-iwad IWAD] [-file FILE [FILE ...]] -map MAP [-width WIDTH] [-heatmap HEATMAP]
+python3 dsda-failspots.py [-h] [-iwad IWAD] [-file FILE [FILE ...]] -map MAP [-width WIDTH] [-heatmap HEATMAP] [-gif GIF]
 
 options:
   -h, --help            show this help message and exit
@@ -23,4 +23,6 @@ options:
   -map MAP              Map to get the failspots of (ex: E3M1, MAP12)
   -width WIDTH          Width of the resulting image (default: 1920)
   -heatmap HEATMAP      Turn on the heatmap and set the number of samples on each direction
+  -gif GIF              Outputs a gif of the progression of the demo attempts. 1: Only show attempts on this interval. 2: Accumulate
+                        attempts
 ```
