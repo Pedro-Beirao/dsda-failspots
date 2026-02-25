@@ -5,9 +5,10 @@ Python script that generates an image of a map with spots where demo attempts en
 ## How to run
 You need a custom build of dsda-doom that outputs the position where the demo attempts end.
 
-1. Download https://github.com/Pedro-Beirao/dsda-doom/releases/tag/v0.29.3-failspots
-2. Copy the dsda-doom binary and dsda-doom.wad to the same folder as dsda-failspots.py
-3. Put the demos that you want to examine in the `/demos` folder
+1. Install the required libraries with `pip install -r requirements.txt`
+2. Download https://github.com/Pedro-Beirao/dsda-doom/releases/tag/v0.29.3-failspots
+3. Copy the dsda-doom binary and dsda-doom.wad to the same folder as dsda-failspots.py
+4. Put the demos that you want to examine in the `/demos` folder
 
 Please provide the full paths to the WAD files.
 
