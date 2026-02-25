@@ -2,7 +2,7 @@ from omg import *
 import sys
 import os
 import subprocess
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
@@ -92,13 +92,15 @@ def drawmap(wad, name, points, filename, width):
               alpha = 0
           draw.rectangle((x*s, y*s, (x+1)*s, (y+1)*s), fill=(255,0,0,alpha))
 
+    font = ImageFont.truetype(os.path.join(pwd, "OpenSans.ttf"), int(xsize/20))
+    draw.text((10, 10), str(image_index+1) + "/10", fill="white", font=font)
 
     del draw
 
-
     result = Image.alpha_composite(im, overlay)
-    result.save(filename, "png")
-    print("Saved image as " + filename)
+    # result.save(filename, "png")
+    # print("Saved image as " + filename)
+    return result
 
 def process_demo(iwad, files, demo):
     points = []
@@ -112,8 +114,9 @@ def process_demo(iwad, files, demo):
       output = subprocess.run(params, capture_output=True, text=True)
 
       for line in output.stdout.splitlines():
-          if line.startswith("death_pos"):
-              points.append([int(line.split()[1]), int(line.split()[2])])
+        if line.startswith("death_pos"):
+          points.append([int(line.split()[1]), int(line.split()[2]), os.path.getmtime(demo)])
+          break
     except Exception:
       pass
 
@@ -143,6 +146,7 @@ parser.add_argument("-file", nargs="+", default=[], help="The first WAD passed n
 parser.add_argument("-map", required=True, help="Map to get the failspots of (ex: E3M1, MAP12)")
 parser.add_argument("-width", type=int, default=1920, help="Width of the resulting image")
 parser.add_argument("-heatmap", type=int, default=0, help="Turn on the heatmap and set the number of samples on each direction")
+parser.add_argument("-gif", action="store_true", help="Outputs a gif of the progression of the demo attempts")
 
 args = parser.parse_args()
 
@@ -157,10 +161,26 @@ wadname = os.path.splitext(os.path.basename(wadpath))[0]
 map = (wad.maps.find(args.map) + wad.udmfmaps.find(args.map))[0]
 
 points = get_death_spots(args.iwad, args.file, map)
-drawmap(
-  wad,
-  map,
-  points,
-  os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.png" if args.heatmap else ".png")),
-  args.width
+sorted_points= sorted(points, key=lambda x: x[2])
+interval = int(len(sorted_points)/10)
+
+images = []
+image_index = 0
+while image_index < 10:
+  images += [drawmap(
+    wad,
+    map,
+    points[image_index*interval:(image_index+1)*interval],
+    os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.png" if args.heatmap else ".png")),
+    args.width
+  )]
+  image_index += 1
+
+# Save as GIF
+images[0].save(
+  os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.gif" if args.heatmap else ".gif")),
+    save_all=True,
+    append_images=images[1:],
+    duration=1000,   # milliseconds per frame
+    loop=0          # 0 = infinite loop
 )
