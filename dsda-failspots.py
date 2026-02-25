@@ -157,4 +157,10 @@ wadname = os.path.splitext(os.path.basename(wadpath))[0]
 map = (wad.maps.find(args.map) + wad.udmfmaps.find(args.map))[0]
 
 points = get_death_spots(args.iwad, args.file, map)
-drawmap(wad, map, points, os.path.join(pwd, "output", wadname + "_" + map + ".png"), args.width)
+drawmap(
+  wad,
+  map,
+  points,
+  os.path.join(pwd, "output", wadname + "_" + map + ("_heatmap.png" if args.heatmap else ".png")),
+  args.width
+)
