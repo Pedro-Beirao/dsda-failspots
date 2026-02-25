@@ -103,7 +103,7 @@ def drawmap(wad, name, points, filename, width):
 def process_demo(iwad, files, demo):
     points = []
     try:
-      params = ["./dsda-doom", "-timedemo", demo, "-nodraw", "-nosound"]
+      params = [os.path.join(pwd,"dsda-doom"), "-timedemo", demo, "-nodraw", "-nosound"]
       if iwad != "":
         params += ["-iwad", iwad]
       if files != []:
