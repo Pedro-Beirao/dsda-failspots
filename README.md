@@ -2,6 +2,8 @@
 
 Python script that generates an image of a map with spots where demo attempts end at. Can also generate a custom sized heatmap.
 
+[DoomWorld dsda-failspots: See where your attempts are failing](https://www.doomworld.com/forum/topic/157407-dsda-failspots-see-where-your-attempts-are-failing/)
+
 ## How to run
 You need a custom build of dsda-doom that outputs the position where the demo attempts end.
 
@@ -26,3 +28,5 @@ options:
   -gif GIF              Outputs a gif of the progression of the demo attempts. 1: Only show attempts on this interval. 2: Accumulate
                         attempts
 ```
+
+Uses the [Omgifol](https://doomwiki.org/wiki/Omgifol) library, using `drawmaps.py` example code as the base
