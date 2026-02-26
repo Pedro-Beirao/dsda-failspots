@@ -40,20 +40,22 @@ def drawmap(wad, name, width):
     edit.linedefs.sort(key=lambda a: not a.twosided)
 
     for line in edit.linedefs:
-         p1x = edit.vertexes[line.v1].x - xmin + 4
-         p1y = edit.vertexes[line.v1].y - ymin + 4
-         p2x = edit.vertexes[line.v2].x - xmin + 4
-         p2y = edit.vertexes[line.v2].y - ymin + 4
+        p1x = edit.vertexes[line.v1].x - xmin + 4
+        p1y = edit.vertexes[line.v1].y - ymin + 4
+        p2x = edit.vertexes[line.v2].x - xmin + 4
+        p2y = edit.vertexes[line.v2].y - ymin + 4
 
-         color = (200, 200, 200)
-         if line.twosided:
-             color = (120, 120, 120)
+        color = (200, 200, 200)
+        if line.twosided:
+            color = (120, 120, 120)
+        if line.dontdraw:
+          continue
 
-         draw.line((p1x, p1y, p2x, p2y), fill=color)
-         draw.line((p1x+1, p1y, p2x+1, p2y), fill=color)
-         draw.line((p1x-1, p1y, p2x-1, p2y), fill=color)
-         draw.line((p1x, p1y+1, p2x, p2y+1), fill=color)
-         draw.line((p1x, p1y-1, p2x, p2y-1), fill=color)
+        draw.line((p1x, p1y, p2x, p2y), fill=color)
+        draw.line((p1x+1, p1y, p2x+1, p2y), fill=color)
+        draw.line((p1x-1, p1y, p2x-1, p2y), fill=color)
+        draw.line((p1x, p1y+1, p2x, p2y+1), fill=color)
+        draw.line((p1x, p1y-1, p2x, p2y-1), fill=color)
 
     return im, xmax, xmin, ymax, ymin, xsize, scale
 
