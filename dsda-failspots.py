@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
 import colorsys
 
+# Draw the base map to be used as background
 def drawmap(wad, name, width):
     xsize = width - 8
 
@@ -40,6 +41,10 @@ def drawmap(wad, name, width):
     edit.linedefs.sort(key=lambda a: not a.twosided)
 
     for line in edit.linedefs:
+        # Dont want to draw monster closets
+        if line.dontdraw:
+          continue
+
         p1x = edit.vertexes[line.v1].x - xmin + 4
         p1y = edit.vertexes[line.v1].y - ymin + 4
         p2x = edit.vertexes[line.v2].x - xmin + 4
@@ -48,8 +53,6 @@ def drawmap(wad, name, width):
         color = (200, 200, 200)
         if line.twosided:
             color = (120, 120, 120)
-        if line.dontdraw:
-          continue
 
         draw.line((p1x, p1y, p2x, p2y), fill=color)
         draw.line((p1x+1, p1y, p2x+1, p2y), fill=color)
@@ -59,11 +62,13 @@ def drawmap(wad, name, width):
 
     return im, xmax, xmin, ymax, ymin, xsize, scale
 
+# Draw the spots where the attempts end
 def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
     overlay = Image.new('RGBA', (int(xmax - xmin) + 8, int(ymax - ymin) + 8), (0,0,0,0))
     draw = ImageDraw.Draw(overlay)
 
     if (args.heatmap == 0):
+      # If the heatmap wasnt requested, simply draw circles
       for point in points:
         point[0] = point[0] * scale
         point[1] = -point[1] * scale
@@ -72,6 +77,7 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
 
         draw.ellipse((point[0]-5, point[1]-5, point[0]+5, point[1]+5), fill=(250,0,0,160))
     else:
+      # First populate a grid of the requested size with 0s
       grid = [[0 for _ in range(args.heatmap)] for _ in range(args.heatmap)]
       s = xsize / args.heatmap
 
@@ -84,8 +90,11 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
         if point[0] >= xsize or point[1] >= xsize:
           continue
 
+        # Mark attempt into grid square
         grid[int(point[1]*args.heatmap/xsize)][int(point[0]*args.heatmap/xsize)] += 1
 
+      # Figure out what grid square ends the most attempts
+      # Used to calculate what hue each square should have
       most_frequent = 0
       for y in range(len(grid)):
         for x in range(len(grid[0])):
@@ -94,6 +103,7 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
 
       for y in range(len(grid)):
         for x in range(len(grid[0])):
+          # Used to change the way the log calculates the hue
           k = 1.2
           if grid[y][x] > 0:
             heat_value = (math.log(grid[y][x] + 1) / math.log(most_frequent + 1))**k
@@ -101,6 +111,7 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
             r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
             draw.rectangle((x*s, y*s, (x+1)*s, (y+1)*s), fill=(int(r*255),int(g*255),int(b*255),200))
 
+    # If it is a gif, write the attempts interval number
     if args.gif:
       font = ImageFont.truetype(os.path.join(pwd, "OpenSans.ttf"), int(xsize/25))
       text = str(image_index+1) + "/10"
@@ -110,12 +121,14 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
       text_width = bbox[2] - bbox[0]
       text_height = bbox[3] - bbox[1]
 
+      # Since gifs can accumulate over the last image, we need to draw a black rectangle behind to overwrite the previous text
       draw.rectangle([x - 5, y - 5, x + text_width + 5, y + text_height + 50 ], fill="black")
 
       draw.text((x, y), text, fill="white", font=font)
 
     return overlay
 
+# Call dsda-doom with the correct parameters
 def process_demo(iwad, files, demo):
     points = []
     try:
@@ -127,6 +140,7 @@ def process_demo(iwad, files, demo):
 
       output = subprocess.run(params, capture_output=True, text=True)
 
+      # We need to look for "death_pos" in the output, and separate the values it gives us
       for line in output.stdout.splitlines():
         if line.startswith("death_pos"):
           points.append([int(line.split()[1]), int(line.split()[2]), os.path.getmtime(demo)])
@@ -136,6 +150,7 @@ def process_demo(iwad, files, demo):
 
     return points
 
+# Create threads that will call dsda-doom and join all points
 def get_death_spots(iwad, files, map):
     path = os.path.join(pwd, 'demos')
     demos = [os.path.join(path, d) for d in os.listdir(path) if os.path.isfile(os.path.join(path, d))]
@@ -175,7 +190,7 @@ wadname = os.path.splitext(os.path.basename(wadpath))[0]
 map = (wad.maps.find(args.map) + wad.udmfmaps.find(args.map))[0]
 
 points = get_death_spots(args.iwad, args.file, map)
-sorted_points= sorted(points, key=lambda x: x[2])
+sorted_points= sorted(points, key=lambda x: x[2]) # Sort by demo "last modified" date
 interval = int(len(sorted_points)/10)
 
 base, xmax, xmin, ymax, ymin, xsize, scale = drawmap(wad, map, args.width)
