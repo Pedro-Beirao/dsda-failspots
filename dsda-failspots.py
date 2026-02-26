@@ -81,6 +81,9 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
         point[0] = point[0] - xmin + 4
         point[1] = point[1] - ymin + 4
 
+        if point[0] >= xsize or point[1] >= xsize:
+          continue
+
         grid[int(point[1]*args.heatmap/xsize)][int(point[0]*args.heatmap/xsize)] += 1
 
       most_frequent = 0
