@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
+import colorsys
 
 def drawmap(wad, name, width):
     xsize = width - 8
@@ -88,12 +89,12 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
 
       for y in range(len(grid)):
         for x in range(len(grid[0])):
-          k = 1.5
+          k = 1.2
           if grid[y][x] > 0:
-              alpha = int(200 * (math.log(grid[y][x] + 1) / math.log(most_frequent + 1))**k)
-          else:
-              alpha = 0
-          draw.rectangle((x*s, y*s, (x+1)*s, (y+1)*s), fill=(255,0,0,alpha))
+            heat_value = (math.log(grid[y][x] + 1) / math.log(most_frequent + 1))**k
+            hue = 0.6 * (1 - heat_value)
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
+            draw.rectangle((x*s, y*s, (x+1)*s, (y+1)*s), fill=(int(r*255),int(g*255),int(b*255),200))
 
     if args.gif:
       font = ImageFont.truetype(os.path.join(pwd, "OpenSans.ttf"), int(xsize/25))
