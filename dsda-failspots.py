@@ -109,7 +109,7 @@ def draw_points(points, xmax, xmin, ymax, ymin, xsize, scale):
             heat_value = (math.log(grid[y][x] + 1) / math.log(most_frequent + 1))**k
             hue = 0.6 * (1 - heat_value)
             r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
-            draw.rectangle((x*s, y*s, (x+1)*s, (y+1)*s), fill=(int(r*255),int(g*255),int(b*255),200))
+            draw.rectangle((x*s, y*s, (x+1)*s, (y+1)*s), fill=(int(r*255),int(g*255),int(b*255),int(100+100*heat_value)))
 
     # If it is a gif, write the attempts interval number
     if args.gif:
